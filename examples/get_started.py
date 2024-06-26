@@ -10,18 +10,19 @@ retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
 model = load_model("flan-t5-xxl")
 prompt_template = load_template("qa")
 
-queries = ["what is haleys comet"]
+while True:
+    queries = [input()]
 
-runner = ResponseRunner(
-    model=model,
-    retriever=retriever,
-    document_collection=collection,
-    prompt_template=prompt_template,
-    queries=queries,
-)
+    runner = ResponseRunner(
+        model=model,
+        retriever=retriever,
+        document_collection=collection,
+        prompt_template=prompt_template,
+        queries=queries,
+    )
 
-responses = runner()
-print(responses[0]["response"])
+    responses = runner()
+    print(responses[0]["response"])
 """
 Halley's Comet Halley's Comet or Comet Halley, officially designated 1P/Halley...
 """
