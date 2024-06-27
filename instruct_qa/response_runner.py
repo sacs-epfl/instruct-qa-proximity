@@ -18,7 +18,7 @@ class ResponseRunner:
         retriever,
         document_collection,
         prompt_template,
-        timing,
+        timings,
         dataset=None,
         queries=None,
         output_path=None,
