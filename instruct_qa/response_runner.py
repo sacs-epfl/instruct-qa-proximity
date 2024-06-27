@@ -18,6 +18,7 @@ class ResponseRunner:
         retriever,
         document_collection,
         prompt_template,
+        timing,
         dataset=None,
         queries=None,
         output_path=None,
@@ -74,7 +75,10 @@ class ResponseRunner:
         ):
             queries = self._dataset.get_queries(batch)
 
-            print("started rag", time.time())
+            if "started rag" not in timings:
+                timings["started rag"] = []
+            timings["started rag"].append(time.time())
+
             if self._use_hosted_retriever:
                 post_results = requests.post(
                     url=self._hosted_retriever_url,
@@ -95,13 +99,20 @@ class ResponseRunner:
             else:
                 r_dict = self._retriever.retrieve(queries, k=self._k)
                 retrieved_indices = r_dict["indices"]
-            print("rag done, getting corresponding text", time.time())
+
+            if "fetch text" not in timings:
+                timings["fetch text"] = []
+            timings["fetch text"].append(time.time())
+            
             # Get the document texts.
             passages = [
                 self._document_collection.get_passages_from_indices(indices)
                 for indices in retrieved_indices
             ]
-            print("text obtained, creating prompt", time.time())
+
+            if "create prompt" not in timings:
+                timings["create prompt"] = []
+            timings["create prompt"].append(time.time())
 
             prompts = [
                 self._prompt_template(
@@ -111,11 +122,15 @@ class ResponseRunner:
                 for sample, p in zip(batch, passages)
             ]
 
-            print("prompt created, getting answers", time.time())
+            if "run model" not in timings:
+                timings["run model"] = []
+            timings["run model"].append(time.time())
 
             responses = self._model(prompts)
 
-            print("answers done", time.time())
+            if "done query" not in timings:
+                timings["done query"] = []
+            timings["done query"].append(time.time())
 
             if self._post_process_response:
                 responses = [self.post_process_response(response) for response in responses]

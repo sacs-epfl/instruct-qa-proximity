@@ -7,17 +7,19 @@ from instruct_qa.response_runner import ResponseRunner
 import string
 import time
 
-print("started load_collection", time.time())
+timings={}
+
+timings["started load_collection"] = time.time()
 collection = load_collection("dpr_wiki_collection")
-print("started load_index", time.time())
+timings["started load_index"] = time.time()
 index = load_index("dpr-nq-multi-hnsw")
-print("started load_retriever", time.time())
+timings["started load_retriever"] = time.time()
 retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
-print("started load_model", time.time())
+timings["started load_model"] = time.time()
 model = load_model("flan-t5-xxl")
-print("started load_template", time.time())
+timings["started load_template"] = time.time()
 prompt_template = load_template("qa")
-print("ram all good", time.time())
+timings["ram all loaded"] = time.time()
 
 megaq = [
     ["what is haleys comet"],
@@ -33,6 +35,7 @@ for queries in megaq:
         document_collection=collection,
         prompt_template=prompt_template,
         queries=queries,
+        timings=timings
     )
 
     responses = runner()
@@ -40,3 +43,5 @@ for queries in megaq:
 """
 Halley's Comet Halley's Comet or Comet Halley, officially designated 1P/Halley...
 """
+
+print(timings)
