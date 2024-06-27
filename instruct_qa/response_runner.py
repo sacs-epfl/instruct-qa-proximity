@@ -34,6 +34,7 @@ class ResponseRunner:
         self._retriever = retriever
         self._document_collection = document_collection
         self._prompt_template = prompt_template
+        self.timings = timings
 
         # either dataset or queries should be specified, but not both
         assert (dataset is None) != (queries is None), "Either dataset or queries should be specified, but not both"
@@ -54,6 +55,7 @@ class ResponseRunner:
         return self._model.post_process_response(response)
 
     def __call__(self):
+        timings = self.timings
         if self._output_path and os.path.exists(self._output_path):
             with open(self._output_path, "r") as f:
                 existing_results = [json.loads(line) for line in f.readlines()]
