@@ -134,6 +134,10 @@ class ResponseRunner:
                 timings["done query"] = []
             timings["done query"].append(time.time())
 
+            if "shape" not in timings:
+                timings["shape"] = []
+            timings["shape"].append([a.shape for a in answers])
+
             if self._post_process_response:
                 responses = [self.post_process_response(response) for response in responses]
 
