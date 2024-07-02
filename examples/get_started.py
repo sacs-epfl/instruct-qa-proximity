@@ -1,3 +1,5 @@
+import instruct_qa
+
 from instruct_qa.collections.utils import load_collection
 from instruct_qa.retrieval.utils import load_retriever, load_index
 from instruct_qa.prompt.utils import load_template
@@ -6,6 +8,7 @@ from instruct_qa.response_runner import ResponseRunner
 
 import string
 import time
+from importlib import reload
 
 timings={}
 timings["started load_model"] = time.time()
@@ -21,26 +24,31 @@ prompt_template = load_template("qa")
 timings["ram all loaded"] = time.time()
 
 megaq = [
-    ["what is haleys comet"],
-    ["give some information about the letter " + str(letter) for letter in string.ascii_lowercase],
-    ["what is love"]
+    ["what is haleys comet?"],
+    ["what is the plot of hamlet?"],
+    ["what does 'nemo videbunt' mean in latin?"]
 ]
 
-for queries in megaq:
+while True:
+    input("Ready to launch, please hit ENTER")
+    reload(instruct_qa)
+    from instruct_qa.response_runner import ResponseRunner
 
-    runner = ResponseRunner(
-        model=model,
-        retriever=retriever,
-        document_collection=collection,
-        prompt_template=prompt_template,
-        queries=queries,
-        timings=timings
-    )
+    for queries in megaq:
 
-    responses = runner()
-    print(responses[0]["response"])
-"""
-Halley's Comet Halley's Comet or Comet Halley, officially designated 1P/Halley...
-"""
+        runner = ResponseRunner(
+            model=model,
+            retriever=retriever,
+            document_collection=collection,
+            prompt_template=prompt_template,
+            queries=queries,
+            timings=timings
+        )
 
-print(timings)
+        responses = runner()
+        print(responses[0]["response"])
+    """
+    Halley's Comet Halley's Comet or Comet Halley, officially designated 1P/Halley...
+    """
+
+    print(timings)
