@@ -312,8 +312,8 @@ class Flan(BaseGenerator):
         timings = self.timings
         if "shape" not in timings:
             timings["shape"] = []
-            timings["shape"].append([a.shape for a in responses])
-            
+        timings["shape"].append([a.shape for a in responses])
+
         return self.tokenizer.batch_decode(
             generate_ids,
             skip_special_tokens=self.skip_special_tokens,
