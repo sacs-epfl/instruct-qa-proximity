@@ -136,7 +136,7 @@ class ResponseRunner:
 
             if "shape" not in timings:
                 timings["shape"] = []
-            timings["shape"].append([a.shape for a in answers])
+            timings["shape"].append([a.shape for a in responses])
 
             if self._post_process_response:
                 responses = [self.post_process_response(response) for response in responses]
