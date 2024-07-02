@@ -8,15 +8,14 @@ import string
 import time
 
 timings={}
-
+timings["started load_model"] = time.time()
+model = load_model("flan-t5-xxl", timings = timings)
 timings["started load_collection"] = time.time()
 collection = load_collection("dpr_wiki_collection")
 timings["started load_index"] = time.time()
 index = load_index("dpr-nq-multi-hnsw")
 timings["started load_retriever"] = time.time()
 retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
-timings["started load_model"] = time.time()
-model = load_model("flan-t5-xxl", timings = timings)
 timings["started load_template"] = time.time()
 prompt_template = load_template("qa")
 timings["ram all loaded"] = time.time()

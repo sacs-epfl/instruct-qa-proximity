@@ -276,6 +276,8 @@ class OPT(BaseGenerator):
 
 class Flan(BaseGenerator):
     def __init__(self, *args, **kwargs):
+        self.timings = kwargs['timings']
+        del kwargs['timings']
         super().__init__(*args, **kwargs)
         self.tokenizer = AutoTokenizer.from_pretrained(
             f"google/{self.model_name}",
@@ -288,7 +290,6 @@ class Flan(BaseGenerator):
             torch_dtype=self.torch_dtype,
             device_map="auto",
         )
-        self.timings = kwargs['timings']
         if self.min_new_tokens is not None:
             logger.warning(
                 "min_new_tokens is not supported for Flan. It will be ignored."
