@@ -276,6 +276,8 @@ class OPT(BaseGenerator):
 
 class Flan(BaseGenerator):
     def __init__(self, *args, **kwargs):
+        self.timings = kwargs['timings']
+        del kwargs['timings']
         super().__init__(*args, **kwargs)
         self.tokenizer = AutoTokenizer.from_pretrained(
             f"google/{self.model_name}",
@@ -308,6 +310,11 @@ class Flan(BaseGenerator):
             max_new_tokens=self.max_new_tokens,
             # min_new_tokens=self.min_new_tokens,
         )
+        timings = self.timings
+        if "shape" not in timings:
+            timings["shape"] = []
+        timings["shape"].append([len(a) for a in generate_ids])
+
         return self.tokenizer.batch_decode(
             generate_ids,
             skip_special_tokens=self.skip_special_tokens,
