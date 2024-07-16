@@ -57,6 +57,10 @@ while True:
                 queries=queries,
                 timings=timings
             )
+
+            responses = runner()
+            print(responses)
+
         print(timings)
     except Exception as e:
         print("attempt failed", e)
