@@ -25,6 +25,8 @@ timings["started load_template"] = time.time()
 prompt_template = load_template("qa")
 timings["ram all loaded"] = time.time()
 
+print(timings)
+
 megaq = [
     ["what is haleys comet?"],
     ["what is the plot of hamlet?"],
@@ -39,6 +41,7 @@ while True:
         input("Ready to launch, please hit ENTER")
         reload(instruct_qa)
         from instruct_qa.response_runner import ResponseRunner
+        timings = {}
 
         for queries in range(1):
             queries = megaqueries.iloc[:5]
@@ -52,6 +55,7 @@ while True:
                 document_collection=collection,
                 prompt_template=prompt_template,
                 queries=queries,
+                timings=timings
             )
         print(timings)
     except Exception as e:
