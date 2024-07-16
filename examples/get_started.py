@@ -46,7 +46,7 @@ while True:
         for queries in range(1):
             queries = megaqueries.iloc[:5]
             print(queries)
-            queries = [str(x) for x in queries.apply(lambda x: f'This is a question about history. Here is the question : {x.question}. Please pick one of the following answers : A) {x.a} B) {x.b} C) {x.c} D) {x.d}.', axis=1)]
+            queries = [str(x) for x in queries.apply(lambda x: f'This is a question about history. Here is the question : {x.question}. The possible answers are : A) {x.a} B) {x.b} C) {x.c} D) {x.d}. What is your choice, A, B, C, or D?', axis=1)]
             print(queries)
             
             runner = ResponseRunner(
@@ -59,7 +59,7 @@ while True:
             )
 
             responses = runner()
-            print(responses)
+            print([r["response"] for r in responses])
 
         print(timings)
     except Exception as e:
