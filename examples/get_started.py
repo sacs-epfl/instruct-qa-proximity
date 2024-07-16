@@ -35,21 +35,24 @@ megaqueries = pd.read_csv('/mnt/nfs/shared/mmlu/test/high_school_world_history_t
 
 
 while True:
-    input("Ready to launch, please hit ENTER")
-    reload(instruct_qa)
-    from instruct_qa.response_runner import ResponseRunner
+    try:
+        input("Ready to launch, please hit ENTER")
+        reload(instruct_qa)
+        from instruct_qa.response_runner import ResponseRunner
 
-    for queries in range(1):
-        queries = megaqueries.iloc[:5]
-        print(queries)
-        queries = queries.apply(lambda x: f'This is a question about history. Here is the question : {x.question}. Please pick one of the following answers : A) {x.a} B) {x.b} C) {x.c} D) {x.d}.', axis=1)
-        print(queries)
-        
-        runner = ResponseRunner(
-            model=model,
-            retriever=retriever,
-            document_collection=collection,
-            prompt_template=prompt_template,
-            queries=queries,
-        )
-    print(timings)
+        for queries in range(1):
+            queries = megaqueries.iloc[:5]
+            print(queries)
+            queries = queries.apply(lambda x: f'This is a question about history. Here is the question : {x.question}. Please pick one of the following answers : A) {x.a} B) {x.b} C) {x.c} D) {x.d}.', axis=1)
+            print(queries)
+            
+            runner = ResponseRunner(
+                model=model,
+                retriever=retriever,
+                document_collection=collection,
+                prompt_template=prompt_template,
+                queries=queries,
+            )
+        print(timings)
+    except Exception as e:
+        print("attempt failed", e)
