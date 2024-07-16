@@ -31,7 +31,7 @@ megaq = [
     ["what does 'nemo videbunt' mean in latin?"]
 ]
 
-megaqueries = pd.read_csv('/mnt/nfs/shared/mmlu/test/high_school_world_history_test.csv', names=['question', 'a', 'b', 'c', 'd', 'correct'])
+megaqueries = pd.read_csv('/mnt/nfs/shared/mmlu/test/high_school_world_history_test.csv', names=['question', 'a', 'b', 'c', 'd', 'correct'], axis=1)
 
 
 while True:
