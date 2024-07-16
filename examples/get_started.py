@@ -31,7 +31,7 @@ megaq = [
     ["what does 'nemo videbunt' mean in latin?"]
 ]
 
-megaqueries = pd.read_csv('/mnt/nfs/shared/mmlu/test/high_school_world_history_test.csv', names=['question', 'a', 'b', 'c', 'd', 'correct'], axis=1)
+megaqueries = pd.read_csv('/mnt/nfs/shared/mmlu/test/high_school_world_history_test.csv', names=['question', 'a', 'b', 'c', 'd', 'correct'])
 
 
 while True:
@@ -42,7 +42,7 @@ while True:
     for queries in range(1):
         queries = megaqueries.iloc[:5]
         print(queries)
-        queries = queries.apply(lambda x: f'This is a question about history. Here is the question : {x.question}. Please pick one of the following answers : A) {x.a} B) {x.b} C) {x.c} D) {x.d}.')
+        queries = queries.apply(lambda x: f'This is a question about history. Here is the question : {x.question}. Please pick one of the following answers : A) {x.a} B) {x.b} C) {x.c} D) {x.d}.', axis=1)
         print(queries)
         
         runner = ResponseRunner(
