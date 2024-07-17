@@ -59,7 +59,7 @@ while True:
             )
 
             responses = runner()
-            print(list(zip([r["response"] for r in responses], list(queries_df.correct))))
+            print(list(zip([r["response"][:5] for r in responses], list(queries_df.correct))))
 
         print(timings)
     except Exception as e:
