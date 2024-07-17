@@ -42,12 +42,11 @@ while True:
         reload(instruct_qa)
         from instruct_qa.response_runner import ResponseRunner
         timings = {}
+        t1 = time.time()
 
         for queries in range(1):
             queries_df = megaqueries.iloc[:25]
-            print(queries_df)
             queries = [str(x) for x in queries_df.apply(lambda x: f'Answer the following question: {x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Please answer only using one of the letters A, B, C, or D.', axis=1)]
-            print(queries)
             
             runner = ResponseRunner(
                 model=model,
@@ -60,7 +59,7 @@ while True:
 
             responses = runner()
             print(list(zip([r["response"][:5] for r in responses], list(queries_df.correct))))
-
-        print(timings)
+            print("")
+            print("elasped time", str(time.time() - t1))
     except Exception as e:
         print("attempt failed", e)
