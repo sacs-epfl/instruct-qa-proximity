@@ -46,7 +46,7 @@ while True:
 
         for queries in range(1):
             queries_df = megaqueries.iloc[:25]
-            queries = [str(x) for x in queries_df.apply(lambda x: f'Answer the following question: {x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Please answer only using one of the letters A, B, C, or D.', axis=1)]
+            queries = [str(x) for x in queries_df.apply(lambda x: f'Answer the following question: {x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Please answer only using one of the letters A, B, C, or D. Your answer:', axis=1)]
             
             runner = ResponseRunner(
                 model=model,
