@@ -23,7 +23,7 @@ class ResponseRunner:
         queries=None,
         output_path=None,
         k=10,
-        batch_size=64,
+        batch_size=20,
         logging_interval=256,
         use_hosted_retriever=False,
         hosted_retriever_url="http://10.140.16.91:42010/search",
