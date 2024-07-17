@@ -58,7 +58,7 @@ while True:
             )
 
             responses = runner()
-            print(list(zip([r["response"][:5] for r in responses], list(queries_df.correct))))
+            print(sum([1 if x == y else 0 for (x, y) in zip([r["response"][:5] for r in responses], list(queries_df.correct))]), "/", len(queries))
             print("")
             print("elasped time", str(time.time() - t1))
     except Exception as e:
