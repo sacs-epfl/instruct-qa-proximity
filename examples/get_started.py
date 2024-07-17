@@ -54,6 +54,7 @@ while True:
                 document_collection=collection,
                 prompt_template=prompt_template,
                 queries=queries,
+                batch_size=int(input("batch size:")),
                 timings=timings
             )
 
