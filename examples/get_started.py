@@ -12,18 +12,11 @@ import string
 import time
 from importlib import reload
 
-timings={}
-timings["started load_model"] = time.time()
-model = load_model("flan-t5-xxl", timings = timings)
-timings["started load_collection"] = time.time()
+model = load_model("flan-t5-xxl")
 collection = load_collection("dpr_wiki_collection")
-timings["started load_index"] = time.time()
 index = load_index("dpr-nq-multi-hnsw")
-timings["started load_retriever"] = time.time()
 retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
-timings["started load_template"] = time.time()
 prompt_template = load_template("qa")
-timings["ram all loaded"] = time.time()
 
 print(timings)
 
@@ -33,7 +26,10 @@ megaq = [
     ["what does 'nemo videbunt' mean in latin?"]
 ]
 
-megaqueries = pd.read_csv('/mnt/nfs/shared/mmlu/test/logical_fallacies_test.csv', names=['question', 'a', 'b', 'c', 'd', 'correct'])
+path = '/mnt/nfs/shared/mmlu/test/'
+
+all_files = glob.glob(os.path.join(path, "*.csv"))
+megaqueries =  pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
 
 
 while True:
@@ -45,7 +41,7 @@ while True:
         t1 = time.time()
 
         for queries in range(1):
-            queries_df = megaqueries.iloc[:25]
+            queries_df = megaqueries.iloc[:200]
             queries = [str(x) for x in queries_df.apply(lambda x: f'Answer the following question: {x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Please answer only using one of the letters A, B, C, or D. Your answer:', axis=1)]
             
             runner = ResponseRunner(
