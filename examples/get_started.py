@@ -29,7 +29,7 @@ megaq = [
 path = '/mnt/nfs/shared/mmlu/test/'
 
 all_files = glob.glob(os.path.join(path, "*.csv"))
-megaqueries =  pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
+megaqueries =  pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
 print(len(megaqueries))
 
 while True:
