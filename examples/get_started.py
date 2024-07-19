@@ -30,7 +30,7 @@ path = '/mnt/nfs/shared/mmlu/test/'
 
 all_files = glob.glob(os.path.join(path, "*.csv"))
 megaqueries =  pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
-
+print(len(megaqueries))
 
 while True:
     try:
