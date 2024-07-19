@@ -19,8 +19,6 @@ index = load_index("dpr-nq-multi-hnsw")
 retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
 prompt_template = load_template("qa")
 
-print(timings)
-
 megaq = [
     ["what is haleys comet?"],
     ["what is the plot of hamlet?"],
