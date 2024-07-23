@@ -19,6 +19,7 @@ class ResponseRunner:
         document_collection,
         prompt_template,
         timings,
+        use_rag=True,
         dataset=None,
         queries=None,
         output_path=None,
@@ -35,6 +36,7 @@ class ResponseRunner:
         self._document_collection = document_collection
         self._prompt_template = prompt_template
         self.timings = timings
+        self.use_rag = use_rag
 
         # either dataset or queries should be specified, but not both
         assert (dataset is None) != (queries is None), "Either dataset or queries should be specified, but not both"
@@ -75,64 +77,54 @@ class ResponseRunner:
         for i, batch in enumerate(
             tqdm(batches, desc="Collecting responses", leave=False)
         ):
-            queries = self._dataset.get_queries(batch)
+            if self.use_rag:
+                queries = self._dataset.get_queries(batch)
 
-            if "started rag" not in timings:
-                timings["started rag"] = []
-            timings["started rag"].append(time.time())
+                if self._use_hosted_retriever:
+                    post_results = requests.post(
+                        url=self._hosted_retriever_url,
+                        json={
+                            "queries": queries,
+                            "k": self._k,
+                            "dataset": self._collection_name,
+                        },
+                    )
+                    r_dict = dict_values_list_to_numpy(post_results.json())
+                    retrieved_indices = r_dict["indices"]
+                elif self._use_cached_retrieved_results:
+                    retrieved_ctx_ids = self._retriever.retrieve(queries, k=self._k)
+                    retrieved_indices = [
+                        self._document_collection.get_indices_from_ids(x)
+                        for x in retrieved_ctx_ids
+                    ]
+                else:
+                    r_dict = self._retriever.retrieve(queries, k=self._k)
+                    retrieved_indices = r_dict["indices"]
+                
+                # Get the document texts.
+                passages = [
+                    self._document_collection.get_passages_from_indices(indices)
+                    for indices in retrieved_indices
+                ]
 
-            if self._use_hosted_retriever:
-                post_results = requests.post(
-                    url=self._hosted_retriever_url,
-                    json={
-                        "queries": queries,
-                        "k": self._k,
-                        "dataset": self._collection_name,
-                    },
-                )
-                r_dict = dict_values_list_to_numpy(post_results.json())
-                retrieved_indices = r_dict["indices"]
-            elif self._use_cached_retrieved_results:
-                retrieved_ctx_ids = self._retriever.retrieve(queries, k=self._k)
-                retrieved_indices = [
-                    self._document_collection.get_indices_from_ids(x)
-                    for x in retrieved_ctx_ids
+                prompts = [
+                    self._prompt_template(
+                        sample=sample,
+                        passages=p,
+                    )
+                    for sample, p in zip(batch, passages)
                 ]
             else:
-                r_dict = self._retriever.retrieve(queries, k=self._k)
-                retrieved_indices = r_dict["indices"]
-
-            if "fetch text" not in timings:
-                timings["fetch text"] = []
-            timings["fetch text"].append(time.time())
-            
-            # Get the document texts.
-            passages = [
-                self._document_collection.get_passages_from_indices(indices)
-                for indices in retrieved_indices
-            ]
-
-            if "create prompt" not in timings:
-                timings["create prompt"] = []
-            timings["create prompt"].append(time.time())
-
-            prompts = [
-                self._prompt_template(
-                    sample=sample,
-                    passages=p,
-                )
-                for sample, p in zip(batch, passages)
-            ]
-
-            if "run model" not in timings:
-                timings["run model"] = []
-            timings["run model"].append(time.time())
+                prompts = [
+                    self._prompt_template(
+                        sample=sample,
+                        passages=["No corresponding source was found. Answer without document help."],
+                    )
+                    for sample in batch
+                ]
+            print(prompts[0]) # todo remove visual check
 
             responses = self._model(prompts)
-
-            if "done query" not in timings:
-                timings["done query"] = []
-            timings["done query"].append(time.time())
 
             if self._post_process_response:
                 responses = [self.post_process_response(response) for response in responses]

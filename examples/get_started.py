@@ -20,17 +20,11 @@ index = load_index("dpr-nq-multi-hnsw")
 retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
 prompt_template = load_template("qa")
 
-megaq = [
-    ["what is haleys comet?"],
-    ["what is the plot of hamlet?"],
-    ["what does 'nemo videbunt' mean in latin?"]
-]
-
 path = '/mnt/nfs/shared/mmlu/test/'
 
 all_files = glob.glob(os.path.join(path, "*.csv"))
-megaqueries =  pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
-print(len(megaqueries))
+mmlu_qs =  pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
+print(len(mmlu_qs))
 
 while True:
     try:
@@ -41,7 +35,7 @@ while True:
         t1 = time.time()
 
         for queries in range(1):
-            queries_df = megaqueries
+            queries_df = mmlu_qs.sample(frac=0.01, random_state=999)
             queries = [str(x) for x in queries_df.apply(lambda x: f'Answer the following question: {x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Please answer only using one of the letters A, B, C, or D. Your answer:', axis=1)]
             
             runner = ResponseRunner(
@@ -51,7 +45,8 @@ while True:
                 prompt_template=prompt_template,
                 queries=queries,
                 batch_size=int(input("batch size:")),
-                timings=timings
+                timings=timings,
+                use_rag=False
             )
 
             responses = runner()
