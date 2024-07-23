@@ -123,7 +123,6 @@ class ResponseRunner:
                     for sample in batch
                 ]
                 retrieved_indices = [0] * self._k
-            print(prompts[0]) # todo remove visual check
 
             responses = self._model(prompts)
 
