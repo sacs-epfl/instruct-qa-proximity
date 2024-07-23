@@ -35,7 +35,7 @@ while True:
         t1 = time.time()
 
         for queries in range(1):
-            queries_df = mmlu_qs.sample(frac=0.01, random_state=999)
+            queries_df = mmlu_qs 
             queries = [str(x) for x in queries_df.apply(lambda x: f'Answer the following question: {x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Please answer only using one of the letters A, B, C, or D. Your answer:', axis=1)]
             
             runner = ResponseRunner(
