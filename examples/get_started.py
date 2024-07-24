@@ -46,7 +46,8 @@ while True:
                 queries=queries,
                 batch_size=int(input("batch size:")),
                 timings=timings,
-                use_rag=False
+                use_rag=False, 
+                k=5 
             )
 
             responses = runner()
