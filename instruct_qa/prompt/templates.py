@@ -110,7 +110,7 @@ class LlamaChatQAPromptTemplate(QAPromptTemplate):
             self.B_INST
             + " "
             + self.B_SYS
-            + "Please answer the following question given the following passages:"
+            + "You are desgined to answer multiple-choice questions. You answer by first giving a letter, then by explaining your choice if you want. Explanation is not graded. Please answer the following question given the following passages:"
             + self.E_SYS
             + "{retrieved_passages}\nQuestion: {query}\n"
             + self.E_INST
