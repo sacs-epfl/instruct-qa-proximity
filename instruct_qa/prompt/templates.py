@@ -88,7 +88,7 @@ class LLMEvalTemplate:
 class QAPromptTemplate(PromptTemplate):
     def __init__(self):
         self.variables = ["query", "retrieved_passages"]
-        self.template = "Please answer the following question given the following passages:\n{retrieved_passages}\nQuestion: {query}\nAnswer: "
+        self.template = "You are a multiple-choice question answering machine. You are only allowed to output a single letter. Do not write a full paragraph. Please answer the following question given the following passages:\n{retrieved_passages}\nQuestion: {query}\nAnswer: "
 
         self.passage_template = PassageTemplate()
 
