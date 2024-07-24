@@ -18,8 +18,8 @@ setup(
     packages=find_packages(include=['instruct_qa*']),
     install_requires=[
         "torch",
-        "transformers==4.29.1",
-        "datasets==2.13.1",
+        "transformers==4.43.1",
+        "datasets==2.20.0",
         "evaluate==0.4.0",
         "wget==3.2",
         "rouge_score==0.1.2",
