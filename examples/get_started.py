@@ -35,7 +35,7 @@ while True:
         t1 = time.time()
 
         for queries in range(1):
-            queries_df = mmlu_qs.sample(frac=0.001, random_state=999)
+            queries_df = mmlu_qs.sample(frac=0.01, random_state=999)
             queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
             
             runner = ResponseRunner(
