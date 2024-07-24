@@ -36,7 +36,7 @@ while True:
 
         for queries in range(1):
             queries_df = mmlu_qs.sample(frac=0.001, random_state=999)
-            queries = [str(x) for x in queries_df.apply(lambda x: f'Answer the following question: {x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Please answer only using one of the letters A, B, C, or D.', axis=1)]
+            queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
             
             runner = ResponseRunner(
                 model=model,
@@ -51,7 +51,7 @@ while True:
 
             responses = runner()
             print(responses)
-            print(sum([1 if x == y else 0 for (x, y) in zip([r["response"][:5] for r in responses], list(queries_df.correct))]), "/", len(queries))
+            print(sum([1 if x == y else 0 for (x, y) in zip([r["response"][:1] for r in responses], list(queries_df.correct))]), "/", len(queries))
             print("")
             print("elasped time", str(time.time() - t1))
     except Exception as e:
