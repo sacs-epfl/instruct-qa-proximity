@@ -14,7 +14,7 @@ import string
 import time
 from importlib import reload
 
-model = load_model("flan-t5-xxl")
+model = load_model("Meta-Llama-3.1-8B-Instruct", weights_path="/mnt/sacs/scratch/shared/llama/llama-models/models/llama3_1/Meta-Llama-3.1-8B-Instruct/consolidated.00.pth")
 collection = load_collection("dpr_wiki_collection")
 index = load_index("dpr-nq-multi-hnsw")
 retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
