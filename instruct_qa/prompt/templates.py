@@ -114,7 +114,7 @@ class LlamaChatQAPromptTemplate(QAPromptTemplate):
             + self.E_SYS
             + "{retrieved_passages}\nQuestion: {query}\n"
             + self.E_INST
-            + "\nAnswer: "
+            + "\nAmong A, B, C or D, your answer is : "
         )
 
         # Llama behaves wierdly at \n\n, so we modeify the passage template to not have \n\n
