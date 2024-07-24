@@ -30,7 +30,7 @@ setup(
         "gunicorn",
         "openai==0.27.8",
         "nltk",
-        "accelerate==0.20.3",
+        "accelerate",
         "jsonlines",
         "protobuf==3.20.*",
     ],
