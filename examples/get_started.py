@@ -49,6 +49,8 @@ while True:
                 queries_df = mmlu_qs.sample(frac=fraction, random_state=999)
             queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
             
+            rag_size = int(input("rag size:"))
+
             runner = ResponseRunner(
                 model=model,
                 retriever=retriever,
@@ -57,12 +59,12 @@ while True:
                 queries=queries,
                 batch_size=int(input("batch size:")),
                 timings=timings,
-                use_rag=False, 
-                k=5 
+                use_rag=rag_size != 0, 
+                k=rag_size if rag_size > 0 else 5 
             )
 
             responses = runner()
-            print(responses)
+            print(responses[0])
             print(sum([1 if x == y else 0 for (x, y) in zip([r["response"].strip()[:1] for r in responses], list(queries_df.correct))]), "/", len(queries))
             print("")
             print("elasped time", str(time.time() - t1))
