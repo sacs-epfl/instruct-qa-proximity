@@ -29,7 +29,6 @@ while True:
         from instruct_qa.response_runner import ResponseRunner
         
         all_files = glob.glob(os.path.join(path, "*.csv"))
-        print(len(mmlu_qs))
         index = int(input("index of file:"))
         if(index >= 0):
             print(all_files[index])
@@ -37,6 +36,7 @@ while True:
         else:
             print("loading all")
             mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
+        print(len(mmlu_qs))
 
         timings = {}
         t1 = time.time()
