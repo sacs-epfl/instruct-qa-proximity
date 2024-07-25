@@ -22,20 +22,31 @@ prompt_template = load_template("llama_chat_qa")
 
 path = '/mnt/nfs/shared/mmlu/test/'
 
-all_files = glob.glob(os.path.join(path, "*.csv"))
-mmlu_qs =  pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
-print(len(mmlu_qs))
-
 while True:
     try:
         input("Ready to launch, please hit ENTER")
         reload(instruct_qa)
         from instruct_qa.response_runner import ResponseRunner
+        
+        all_files = glob.glob(os.path.join(path, "*.csv"))
+        print(len(mmlu_qs))
+        index = int(input("index of file:"))
+        if(index >= 0):
+            print(all_files[index])
+            mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files[index:index+1]), ignore_index=True)
+        else:
+            print("loading all")
+            mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
+
         timings = {}
         t1 = time.time()
 
         for queries in range(1):
-            queries_df = mmlu_qs.sample(frac=0.01, random_state=999)
+            fraction = float(input("fraction:"))
+            if fraction >= 0.99:
+                queries_df = mmlu_qs
+            else:
+                queries_df = mmlu_qs.sample(frac=fraction, random_state=999)
             queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
             
             runner = ResponseRunner(
