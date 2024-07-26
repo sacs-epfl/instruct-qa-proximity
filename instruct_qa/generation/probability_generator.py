@@ -20,6 +20,6 @@ class ProbabilityGenerator:
         probabilities = F.softmax(last_token_logits, dim=-1)
         top_k_probs, top_k_indices = torch.topk(probabilities, k)
 
-        top_k_tokens = tokenizer.convert_ids_to_tokens(top_k_indices)
+        top_k_tokens = self.tokenizer.convert_ids_to_tokens(top_k_indices)
 
         return [x for x in top_k_tokens if x in searchlist]
