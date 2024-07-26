@@ -101,7 +101,7 @@ class ResponseRunner:
         return prompts
 
     def get_probas(self, sentence, searchlist, k): #todo batching
-        batch = [sentence]
+        batch = [{"question" : sentence}]
         if self.use_rag:
             prompts = self.rag_call(batch)
         else:
