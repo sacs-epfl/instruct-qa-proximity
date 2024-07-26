@@ -22,4 +22,4 @@ class ProbabilityGenerator:
 
         top_k_tokens = self.tokenizer.convert_ids_to_tokens(top_k_indices)
 
-        return [x for x in top_k_tokens if x in searchlist]
+        return top_k_tokens
