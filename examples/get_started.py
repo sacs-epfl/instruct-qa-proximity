@@ -65,9 +65,10 @@ while True:
             use_rag=rag_size != 0, 
             k=rag_size if rag_size > 0 else 5 
         )
-        for s in queries:
-            responses = runner.get_probas(["_A", "_B", "_C", "_D"], 30)
-            print(responses)
+        
+        responses = runner.get_probas(["_A", "_B", "_C", "_D"], 30)
+        print("_C" in responses)
+        print(responses)
      
     except Exception:
         print(traceback.format_exc())
