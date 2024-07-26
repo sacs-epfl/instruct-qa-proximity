@@ -67,7 +67,7 @@ while True:
         )
         
         responses = runner.get_probas(["_A", "_B", "_C", "_D"], 30)
-        print("_C" in responses)
+        print("_C" in responses, "C" in responses)
         print(responses)
      
     except Exception:

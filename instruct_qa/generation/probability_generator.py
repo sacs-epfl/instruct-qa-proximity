@@ -21,5 +21,6 @@ class ProbabilityGenerator:
         top_k_probs, top_k_indices = torch.topk(probabilities, k)
 
         top_k_tokens = self.tokenizer.convert_ids_to_tokens(top_k_indices)
-
+        top_k_tokens = [self.tokenizer.convert_tokens_to_string([tok]) for tok in top_k_tokens]
+        
         return top_k_tokens
