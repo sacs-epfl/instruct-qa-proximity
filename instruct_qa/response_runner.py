@@ -101,7 +101,7 @@ class ResponseRunner:
 
     def get_probas(self, searchlist, k): #todo batching
         batches = [
-            [self._dataset[i, i+1]]
+            [self._dataset[i:i+1]]
             for i in range(0,1)
         ]
         batch = batches[0]
