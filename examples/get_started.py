@@ -41,32 +41,30 @@ while True:
         timings = {}
         t1 = time.time()
 
-        for queries in range(1):
-            fraction = float(input("fraction:"))
-            if fraction >= 0.99:
-                queries_df = mmlu_qs
-            else:
-                queries_df = mmlu_qs.sample(frac=fraction, random_state=999)
-            queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
-            
-            rag_size = int(input("rag size:"))
 
-            runner = ResponseRunner(
-                model=model,
-                retriever=retriever,
-                document_collection=collection,
-                prompt_template=prompt_template,
-                queries=queries,
-                batch_size=int(input("batch size:")),
-                timings=timings,
-                use_rag=rag_size != 0, 
-                k=rag_size if rag_size > 0 else 5 
-            )
+        fraction = float(input("fraction:"))
+        if fraction >= 0.99:
+            queries_df = mmlu_qs
+        else:
+            queries_df = mmlu_qs.sample(frac=fraction, random_state=999)
+        queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
+        
+        rag_size = int(input("rag size:"))
 
-            responses = runner()
-            print(responses[0])
-            print(sum([1 if x == y else 0 for (x, y) in zip([r["response"].strip()[:1] for r in responses], list(queries_df.correct))]), "/", len(queries))
-            print("")
-            print("elasped time", str(time.time() - t1))
+        runner = ResponseRunner(
+            model=model,
+            retriever=retriever,
+            document_collection=collection,
+            prompt_template=prompt_template,
+            queries=queries,
+            batch_size=int(input("batch size:")),
+            timings=timings,
+            use_rag=rag_size != 0, 
+            k=rag_size if rag_size > 0 else 5 
+        )
+        for s in queries:
+            responses = runner.get_probas(s, ["_A", "_B", "_C", "_D"], 30)
+            print(responses)
+     
     except Exception as e:
         print("attempt failed", e)

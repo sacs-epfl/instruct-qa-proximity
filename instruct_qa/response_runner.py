@@ -8,7 +8,10 @@ import time
 
 from instruct_qa.retrieval.utils import dict_values_list_to_numpy
 from instruct_qa.dataset.qa import GenericQADataset
+from instruct_qa.generation import ProbabilityGenerator
+
 from tqdm import tqdm
+
 
 
 class ResponseRunner:
@@ -32,6 +35,7 @@ class ResponseRunner:
         post_process_response=False,
     ):
         self._model = model
+        self._probamodel = ProbabilityGenerator(model.model, model.tokenizer)
         self._retriever = retriever
         self._document_collection = document_collection
         self._prompt_template = prompt_template
@@ -56,6 +60,63 @@ class ResponseRunner:
     def post_process_response(self, response):
         return self._model.post_process_response(response)
 
+    def rag_call(self, batch):
+        queries = self._dataset.get_queries(batch)
+
+        if self._use_hosted_retriever:
+            post_results = requests.post(
+                url=self._hosted_retriever_url,
+                json={
+                    "queries": queries,
+                    "k": self._k,
+                    "dataset": self._collection_name,
+                },
+            )
+            r_dict = dict_values_list_to_numpy(post_results.json())
+            retrieved_indices = r_dict["indices"]
+        elif self._use_cached_retrieved_results:
+            retrieved_ctx_ids = self._retriever.retrieve(queries, k=self._k)
+            retrieved_indices = [
+                self._document_collection.get_indices_from_ids(x)
+                for x in retrieved_ctx_ids
+            ]
+        else:
+            r_dict = self._retriever.retrieve(queries, k=self._k)
+            retrieved_indices = r_dict["indices"]
+        
+        # Get the document texts.
+        passages = [
+            self._document_collection.get_passages_from_indices(indices)
+            for indices in retrieved_indices
+        ]
+
+        prompts = [
+            self._prompt_template(
+                sample=sample,
+                passages=p,
+            )
+            for sample, p in zip(batch, passages)
+        ]
+
+        return prompts
+
+    def get_probas(self, sentence, searchlist, k): #todo batching
+        batch = [sentence]
+        if self.use_rag:
+            prompts = self.rag_call(batch)
+        else:
+            prompts = [
+                self._prompt_template(
+                    sample=sample,
+                    passages=[{"title" : "Not Found", "text" : "No corresponding source was found. Answer without document help."}],
+                )
+                for sample in batch
+            ]
+            retrieved_indices = [0] * self._k
+
+        return self._probamodel(prompts[0], searchlist, k)
+
+
     def __call__(self):
         timings = self.timings
         if self._output_path and os.path.exists(self._output_path):
@@ -78,42 +139,7 @@ class ResponseRunner:
             tqdm(batches, desc="Collecting responses", leave=False)
         ):
             if self.use_rag:
-                queries = self._dataset.get_queries(batch)
-
-                if self._use_hosted_retriever:
-                    post_results = requests.post(
-                        url=self._hosted_retriever_url,
-                        json={
-                            "queries": queries,
-                            "k": self._k,
-                            "dataset": self._collection_name,
-                        },
-                    )
-                    r_dict = dict_values_list_to_numpy(post_results.json())
-                    retrieved_indices = r_dict["indices"]
-                elif self._use_cached_retrieved_results:
-                    retrieved_ctx_ids = self._retriever.retrieve(queries, k=self._k)
-                    retrieved_indices = [
-                        self._document_collection.get_indices_from_ids(x)
-                        for x in retrieved_ctx_ids
-                    ]
-                else:
-                    r_dict = self._retriever.retrieve(queries, k=self._k)
-                    retrieved_indices = r_dict["indices"]
-                
-                # Get the document texts.
-                passages = [
-                    self._document_collection.get_passages_from_indices(indices)
-                    for indices in retrieved_indices
-                ]
-
-                prompts = [
-                    self._prompt_template(
-                        sample=sample,
-                        passages=p,
-                    )
-                    for sample, p in zip(batch, passages)
-                ]
+                prompts = self.rag_call(batch)
             else:
                 prompts = [
                     self._prompt_template(
