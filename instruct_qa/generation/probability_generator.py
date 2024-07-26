@@ -9,7 +9,7 @@ class ProbabilityGenerator:
 
     def __call__(self, sentence, searchlist, k=100):
         self.model.eval()
-        input_ids = self.tokenizer(input_text, return_tensors='pt').input_ids.cuda()
+        input_ids = self.tokenizer(sentence, return_tensors='pt').input_ids.cuda()
 
         with torch.no_grad():
             outputs = self.model(input_ids)
