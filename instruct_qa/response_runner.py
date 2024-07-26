@@ -60,8 +60,8 @@ class ResponseRunner:
     def post_process_response(self, response):
         return self._model.post_process_response(response)
 
-    def rag_call(self, batch):
-        queries = self._dataset.get_queries(batch)
+    def rag_call(self, queries):
+        
 
         if self._use_hosted_retriever:
             post_results = requests.post(
@@ -101,7 +101,7 @@ class ResponseRunner:
         return prompts
 
     def get_probas(self, sentence, searchlist, k): #todo batching
-        batch = [{"question" : sentence}]
+        batch = [sentence]
         if self.use_rag:
             prompts = self.rag_call(batch)
         else:
@@ -139,7 +139,8 @@ class ResponseRunner:
             tqdm(batches, desc="Collecting responses", leave=False)
         ):
             if self.use_rag:
-                prompts = self.rag_call(batch)
+                queries = self._dataset.get_queries(batch)
+                prompts = self.rag_call(quries)
             else:
                 prompts = [
                     self._prompt_template(
