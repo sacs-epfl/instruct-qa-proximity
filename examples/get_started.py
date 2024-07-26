@@ -25,6 +25,12 @@ prompt_template = load_template("llama_chat_qa")
 
 path = '/mnt/nfs/shared/mmlu/test/'
 
+def find_best_tok(lis):
+    for elem in lis:
+        if elem.upper in [" A", " B", " C", " D"]:
+            return elem[1].upper()
+    return None
+
 while True:
     try:
         input("Ready to launch, please hit ENTER")
@@ -66,9 +72,10 @@ while True:
             k=rag_size if rag_size > 0 else 5 
         )
         
-        responses = runner.get_probas(["_A", "_B", "_C", "_D"], 30)
-        print("_C" in responses, "C" in responses," C" in responses)
-        print(responses)
-     
+        responses = runner.get_probas(30)
+        best_calls = [find_best_tok(toks) for toks in responses]
+
+        print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, list(queries_df.correct))]), "/", len(queries))
+
     except Exception:
         print(traceback.format_exc())

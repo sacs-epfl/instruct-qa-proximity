@@ -99,26 +99,28 @@ class ResponseRunner:
 
         return prompts
 
-    def get_probas(self, searchlist, k): #todo batching
+    def get_probas(self, k): #todo batching
         batches = [
             self._dataset[i:i+1]
-            for i in range(0,1)
+            for i in range(len(self._dataset))
         ]
-        batch = batches[0]
-        queries = self._dataset.get_queries(batch)
-        if self.use_rag:
-            prompts = self.rag_call(batch, queries)
-        else:
-            prompts = [
-                self._prompt_template(
-                    sample=sample,
-                    passages=[{"title" : "Not Found", "text" : "No corresponding source was found. Answer without document help."}],
-                )
-                for sample in batch
-            ]
-            retrieved_indices = [0] * self._k
+        ret = []
+        for batch in batches:
+            queries = self._dataset.get_queries(batch)
+            if self.use_rag:
+                prompts = self.rag_call(batch, queries)
+            else:
+                prompts = [
+                    self._prompt_template(
+                        sample=sample,
+                        passages=[{"title" : "Not Found", "text" : "No corresponding source was found. Answer without document help."}],
+                    )
+                    for sample in batch
+                ]
+                retrieved_indices = [0] * self._k
 
-        return self._probamodel(prompts[0], searchlist, k)
+            ret.append(self._probamodel(prompts[0], k))
+        return ret
 
 
     def __call__(self):

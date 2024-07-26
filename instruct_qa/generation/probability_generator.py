@@ -7,7 +7,7 @@ class ProbabilityGenerator:
         self.model = model
         self.tokenizer = tokenizer
 
-    def __call__(self, sentence, searchlist, k=100):
+    def __call__(self, sentence, k=100):
         self.model.eval()
         input_ids = self.tokenizer(sentence, return_tensors='pt').input_ids.cuda()
 
@@ -22,5 +22,5 @@ class ProbabilityGenerator:
 
         top_k_tokens = self.tokenizer.convert_ids_to_tokens(top_k_indices)
         top_k_tokens = [self.tokenizer.convert_tokens_to_string([tok]) for tok in top_k_tokens]
-        
+
         return top_k_tokens
