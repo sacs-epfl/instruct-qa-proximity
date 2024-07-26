@@ -10,6 +10,9 @@ import pandas as pd
 import glob
 import os
 
+import traceback 
+
+
 import string
 import time
 from importlib import reload
@@ -66,5 +69,5 @@ while True:
             responses = runner.get_probas(s, ["_A", "_B", "_C", "_D"], 30)
             print(responses)
      
-    except Exception as e:
-        print("attempt failed", e)
+    except Exception:
+        print(traceback.format_exc())

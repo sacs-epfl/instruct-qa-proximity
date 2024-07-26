@@ -60,9 +60,8 @@ class ResponseRunner:
     def post_process_response(self, response):
         return self._model.post_process_response(response)
 
-    def rag_call(self, queries):
-        
-
+    def rag_call(self, batch, queries):
+    
         if self._use_hosted_retriever:
             post_results = requests.post(
                 url=self._hosted_retriever_url,
@@ -100,10 +99,15 @@ class ResponseRunner:
 
         return prompts
 
-    def get_probas(self, sentence, searchlist, k): #todo batching
-        batch = [sentence]
+    def get_probas(self, searchlist, k): #todo batching
+        batches = [
+            [self._dataset[i, i+1]]
+            for i in range(0,1)
+        ]
+        batch = batches[0]
+        queries = self._dataset.get_queries(batch)
         if self.use_rag:
-            prompts = self.rag_call(batch)
+            prompts = self.rag_call(batch, queries)
         else:
             prompts = [
                 self._prompt_template(
@@ -140,7 +144,7 @@ class ResponseRunner:
         ):
             if self.use_rag:
                 queries = self._dataset.get_queries(batch)
-                prompts = self.rag_call(quries)
+                prompts = self.rag_call(batch, queries)
             else:
                 prompts = [
                     self._prompt_template(
