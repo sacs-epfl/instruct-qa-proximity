@@ -75,6 +75,8 @@ while True:
         responses = runner.get_probas(30)
         best_calls = [find_best_tok(toks) for toks in responses]
 
+        print(best_calls, list(queries_df.correct))
+
         print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, list(queries_df.correct))]), "/", len(queries))
 
     except Exception:
