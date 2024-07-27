@@ -110,7 +110,7 @@ class LlamaChatQAPromptTemplate(QAPromptTemplate):
             self.B_INST
             + " "
             + self.B_SYS
-            + "You are desgined to answer multiple-choice questions. Your answer format is \"<LETTER> - <EXPLANATION>\". Explanation is not graded. There is a RAG meant to help you by giving you resources that may be useful. The RAG information starts NOW:"
+            + "You are designed to answer multiple-choice questions. Your answer format is \"<LETTER> - <EXPLANATION>\". Explanation is not graded. There is a RAG meant to help you by giving you resources that may be useful. The RAG information starts NOW:"
             + self.E_SYS
             + "{retrieved_passages}\n The RAG information stops NOW. Your question is: {query}\n"
             + self.E_INST

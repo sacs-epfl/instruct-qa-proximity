@@ -113,7 +113,7 @@ class ResponseRunner:
                 prompts = [
                     self._prompt_template(
                         sample=sample,
-                        passages=[{"title" : "Not Found", "text" : "No corresponding source was found. Answer without document help."}],
+                        passages=[{"title" : "Not Found", "text" : "No corresponding source was found."}],
                     )
                     for sample in batch
                 ]
