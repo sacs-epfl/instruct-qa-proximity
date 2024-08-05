@@ -78,6 +78,7 @@ while True:
 
         print(best_calls, list(queries_df.correct))
         print("rag time", np.mean(trags))
+        print("total time", time.time() - t1)
 
         print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, list(queries_df.correct))]), "/", len(queries))
 
