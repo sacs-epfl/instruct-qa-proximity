@@ -72,10 +72,11 @@ while True:
             k=rag_size if rag_size > 0 else 5 
         )
         
-        responses = runner.get_probas(30)
+        responses, trags = runner.get_probas(30)
         best_calls = [find_best_tok(toks) for toks in responses]
 
         print(best_calls, list(queries_df.correct))
+        print("rag time", trags)
 
         print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, list(queries_df.correct))]), "/", len(queries))
 

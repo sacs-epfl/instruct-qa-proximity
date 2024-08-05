@@ -61,6 +61,8 @@ class ResponseRunner:
         return self._model.post_process_response(response)
 
     def rag_call(self, batch, queries):
+
+        t1 = time.time()
     
         if self._use_hosted_retriever:
             post_results = requests.post(
@@ -97,7 +99,7 @@ class ResponseRunner:
             for sample, p in zip(batch, passages)
         ]
 
-        return prompts
+        return prompts, (time.time() - t1)
 
     def get_probas(self, k): #todo batching
         batches = [
@@ -105,10 +107,11 @@ class ResponseRunner:
             for i in range(len(self._dataset))
         ]
         ret = []
+        trags = []
         for batch in batches:
             queries = self._dataset.get_queries(batch)
             if self.use_rag:
-                prompts = self.rag_call(batch, queries)
+                prompts, trag = self.rag_call(batch, queries)
             else:
                 prompts = [
                     self._prompt_template(
@@ -117,10 +120,12 @@ class ResponseRunner:
                     )
                     for sample in batch
                 ]
+                trag = 0
                 retrieved_indices = [0] * self._k
 
             ret.append(self._probamodel(prompts[0], k))
-        return ret
+            trags.append(trag)
+        return ret, trags
 
 
     def __call__(self):
@@ -146,7 +151,7 @@ class ResponseRunner:
         ):
             if self.use_rag:
                 queries = self._dataset.get_queries(batch)
-                prompts = self.rag_call(batch, queries)
+                prompts, trag = self.rag_call(batch, queries)
             else:
                 prompts = [
                     self._prompt_template(
@@ -155,6 +160,7 @@ class ResponseRunner:
                     )
                     for sample in batch
                 ]
+                trag = 0
                 retrieved_indices = [0] * self._k
 
             responses = self._model(prompts)
