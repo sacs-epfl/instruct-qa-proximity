@@ -9,6 +9,7 @@ from instruct_qa.response_runner import ResponseRunner
 import pandas as pd
 import glob
 import os
+import numpy as np
 
 import traceback 
 
@@ -76,7 +77,7 @@ while True:
         best_calls = [find_best_tok(toks) for toks in responses]
 
         print(best_calls, list(queries_df.correct))
-        print("rag time", trags)
+        print("rag time", np.mean(trags))
 
         print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, list(queries_df.correct))]), "/", len(queries))
 
