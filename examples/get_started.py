@@ -27,7 +27,7 @@ path = '/mnt/nfs/shared/mmlu/test/'
 
 def find_best_tok(lis):
     for elem in lis:
-        if elem.upper in [" A", " B", " C", " D"]:
+        if elem.upper() in [" A", " B", " C", " D"]:
             return elem[1].upper()
     return None
 
