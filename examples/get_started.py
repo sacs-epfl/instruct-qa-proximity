@@ -20,11 +20,11 @@ from importlib import reload
 
 model = load_model("meta-llama/Meta-Llama-3.1-8B-Instruct", weights_path="meta-llama/Meta-Llama-3.1-8B-Instruct", max_new_tokens=15)
 collection = load_collection("dpr_wiki_collection")
-index = load_index("dpr-nq-multi-hnsw")
+index = load_index("dpr-nq-multi-hnsw", index_path = "/mnt/nfs/home/randl/datasets/index.dpr")
 retriever = load_retriever("facebook-dpr-question_encoder-multiset-base", index)
 prompt_template = load_template("llama_chat_qa")
 
-path = '/mnt/nfs/shared/mmlu/test/'
+mmlu_path = '/mnt/nfs/shared/mmlu/test/'
 
 def find_best_tok(lis):
     for elem in lis:
@@ -32,13 +32,14 @@ def find_best_tok(lis):
             return elem[1].upper()
     return None
 
+print("LLM LOADING DONE")
 while True:
     try:
         input("Ready to launch, please hit ENTER")
         reload(instruct_qa)
         from instruct_qa.response_runner import ResponseRunner
         
-        all_files = glob.glob(os.path.join(path, "*.csv"))
+        all_files = glob.glob(os.path.join(mmlu_path, "*.csv"))
         index = int(input("index of file:"))
         if(index >= 0):
             print(all_files[index])
@@ -73,6 +74,7 @@ while True:
             k=rag_size if rag_size > 0 else 5 
         )
         
+        # get 30 most likely tokens and find which one does best
         responses, trags = runner.get_probas(30)
         best_calls = [find_best_tok(toks) for toks in responses]
 
