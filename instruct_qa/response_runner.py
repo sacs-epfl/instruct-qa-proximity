@@ -22,6 +22,7 @@ class ResponseRunner:
         document_collection,
         prompt_template,
         timings,
+        cache,
         use_rag=True,
         dataset=None,
         queries=None,
@@ -40,6 +41,8 @@ class ResponseRunner:
         self._document_collection = document_collection
         self._prompt_template = prompt_template
         self.timings = timings
+        self.cache = cache
+        self.cache_hit = 0
         self.use_rag = use_rag
 
         # either dataset or queries should be specified, but not both
@@ -82,8 +85,16 @@ class ResponseRunner:
                 for x in retrieved_ctx_ids
             ]
         else:
-            r_dict = self._retriever.retrieve(queries, k=self._k)
-            retrieved_indices = r_dict["indices"]
+            encoded = self._retriever.encode_queries(queries)
+            print(encoded.shape)
+            cache_res = self.cache.find(list(encoded[0]))
+            if cache_res is not None:
+                retrieved_indices = cache_res
+                self.cache_hit += 1
+            else:
+                r_dict = self._retriever.retrieve(encoded, k=self._k)
+                retrieved_indices = r_dict["indices"]
+                self.cache.insert(list(encoded[0]), list(retrieved_indices[0]))
         
         # Get the document texts.
         passages = [
