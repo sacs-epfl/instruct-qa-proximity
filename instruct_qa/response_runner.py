@@ -86,10 +86,9 @@ class ResponseRunner:
             ]
         else:
             encoded = self._retriever.encode_queries(queries)
-            print(encoded.shape)
             cache_res = self.cache.find(list(encoded[0]))
             if cache_res is not None:
-                retrieved_indices = cache_res
+                retrieved_indices = [cache_res]
                 self.cache_hit += 1
             else:
                 r_dict = self._retriever.retrieve(encoded, k=self._k)

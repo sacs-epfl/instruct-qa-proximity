@@ -44,68 +44,71 @@ def find_best_tok(lis):
 
 print("LLM LOADING DONE")
 
-for cache_capacity in [100, 1000, 10000]:
-    for cache_depth in [5]:
-        for cache_tolerance in [0.0001]:
-            should_expand = True
-            cache = proximipy.FVecToUsizeVectorCache(cache_capacity, cache_tolerance)
-            try:
-                input("Ready to launch, please hit ENTER")
-                reload(instruct_qa)
-                from instruct_qa.response_runner import ResponseRunner
-                
-                all_files = glob.glob(os.path.join(mmlu_path, "*.csv"))
-                index = int(input("index of file:"))
-                if(index >= 0):
-                    print(all_files[index])
-                    mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files[index:index+1]), ignore_index=True)
-                else:
-                    print("loading all")
-                    mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
-                print(len(mmlu_qs))
+while True:
+    for cache_capacity in [1000]:
+        for cache_depth in [5]:
+            for cache_tolerance in [100.0]:
+                try:
 
-                timings = {}
-                t1 = time.time()
+                    cache_tolerance = float(input("cache tole : "))
+                    should_expand = True
+                    cache = proximipy.FVecToUsizeVectorCache(cache_capacity, cache_tolerance)
+                    input("Ready to launch, please hit ENTER")
+                    reload(instruct_qa)
+                    from instruct_qa.response_runner import ResponseRunner
+                    
+                    all_files = glob.glob(os.path.join(mmlu_path, "*.csv"))
+                    index = int(input("index of file:"))
+                    if(index >= 0):
+                        print(all_files[index])
+                        mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files[index:index+1]), ignore_index=True)
+                    else:
+                        print("loading all")
+                        mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
+                    print(len(mmlu_qs))
+
+                    timings = {}
+                    t1 = time.time()
 
 
-                fraction = float(input("fraction:"))
-                if fraction >= 0.99:
-                    queries_df = mmlu_qs
-                else:
-                    queries_df = mmlu_qs.sample(frac=fraction, random_state=999)
-                queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
-                answers = list(queries_df.correct)
+                    fraction = float(input("fraction:"))
+                    if fraction >= 0.99:
+                        queries_df = mmlu_qs
+                    else:
+                        queries_df = mmlu_qs.sample(frac=fraction, random_state=999)
+                    queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
+                    answers = list(queries_df.correct)
 
-                if should_expand:
-                    queries = [x for query in queries for x in expand_question(query)]
-                    answers = [answer for answer in answers for i in range(4)] # repeat 4 times every answer
+                    if should_expand:
+                        queries = [x for query in queries for x in expand_question(query)]
+                        answers = [answer for answer in answers for i in range(4)] # repeat 4 times every answer
 
-                rag_size = int(input("rag size:"))
-                batch_size=int(input("batch size:"))
+                    rag_size = int(input("rag size:"))
+                    batch_size= 32
 
-                runner = ResponseRunner(
-                    model=model,
-                    retriever=retriever,
-                    document_collection=collection,
-                    prompt_template=prompt_template,
-                    queries=queries,
-                    batch_size=batch_size,
-                    timings=timings,
-                    use_rag=rag_size != 0, 
-                    k=rag_size if rag_size > 0 else 5,
-                    cache=cache
-                )
-                
-                # get 30 most likely tokens and find which one does best
-                responses, trags = runner.get_probas(30)
-                best_calls = [find_best_tok(toks) for toks in responses]
+                    runner = ResponseRunner(
+                        model=model,
+                        retriever=retriever,
+                        document_collection=collection,
+                        prompt_template=prompt_template,
+                        queries=queries,
+                        batch_size=batch_size,
+                        timings=timings,
+                        use_rag=rag_size != 0, 
+                        k=rag_size if rag_size > 0 else 5,
+                        cache=cache
+                    )
+                    
+                    # get 30 most likely tokens and find which one does best
+                    responses, trags = runner.get_probas(30)
+                    best_calls = [find_best_tok(toks) for toks in responses]
 
-                print(best_calls, list(queries_df.correct))
-                print("rag time", np.mean(trags))
-                print("total time", time.time() - t1)
-                print("hit rate", runner.cache_hit / len(responses))
-                print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, list(queries_df.correct))]), "/", len(queries))
+                    print(best_calls, answers)
+                    print("rag time", np.mean(trags))
+                    print("total time", time.time() - t1)
+                    print("hit rate", runner.cache_hit / len(responses))
+                    print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, answers)]), "/", len(answers))
 
-            except Exception:
-                print(traceback.format_exc())
+                except Exception:
+                    print(traceback.format_exc())
 
