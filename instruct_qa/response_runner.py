@@ -23,6 +23,7 @@ class ResponseRunner:
         prompt_template,
         timings,
         cache,
+        cache_depth,
         use_rag=True,
         dataset=None,
         queries=None,
@@ -43,6 +44,7 @@ class ResponseRunner:
         self.timings = timings
         self.cache = cache
         self.cache_hit = 0
+        self.cache_depth = cache_depth
         self.use_rag = use_rag
 
         # either dataset or queries should be specified, but not both
@@ -143,3 +145,12 @@ class ResponseRunner:
         Path(self._output_path).parent.mkdir(parents=True, exist_ok=True)
         with open(self._output_path, "a") as f:
             f.writelines(json.dumps(result) + "\n" for result in results)
+
+    def recompute_embeddings(passages):
+        return self._retriever.encode_queries(passages)
+
+    def rerank(target, embeddings):
+        print(target)
+        print("-----")
+        print(embeddings)
+        return range(len(embeddings))
