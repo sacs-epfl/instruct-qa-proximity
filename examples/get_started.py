@@ -13,6 +13,7 @@ import numpy as np
 import traceback 
 import string
 import time
+import itertools
 from importlib import reload
 
 import proximipy
@@ -45,37 +46,44 @@ def find_best_tok(lis):
 
 print("LLM LOADING DONE")
 
-while True:
-   
+#params for experiments
+index = 18 # we work with econometrics
+fraction = 1.0 # use all questions of the topic
+
+seeds_range = list(range(42, 42 + 5))
+cache_capacity_range  = [100, 250, 1000]
+cache_tolerance_range = [0.001, 1.0, 10.0, 100.0]
+db_k_range = [5, 20, 200]
+rag_size = 5
+
+results = {}
+
+for paramlist in itertools.product(seeds_range, cache_capacity_range, cache_tolerance_range, db_k_range):
+    (seed, cache_capacity, cache_tolerance, db_k) = paramlist
+
     try:
-        cache_capacity  = int(input("cache capacity : "))
-        cache_tolerance = float(input("cache tolerance : "))
-        cache_depth = int(input("cache depth : "))
-        should_expand = True
-        cache = proximipy.FVecToUsizeVectorCache(cache_capacity, cache_tolerance)
-        input("Ready to launch, please hit ENTER")
-        reload(instruct_qa)
-        from instruct_qa.response_runner import ResponseRunner
-        
         all_files = glob.glob(os.path.join(mmlu_path, "*.csv"))
-        index = int(input("index of file:"))
+        
         if(index >= 0):
             print(all_files[index])
             mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files[index:index+1]), ignore_index=True)
         else:
             print("loading all")
             mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
-        print(len(mmlu_qs))
+
+        should_expand = True #whether questions should be modified to create new ones
+        cache = proximipy.FVecToUsizeVectorBest(cache_capacity, cache_tolerance)
+        reload(instruct_qa)
+        from instruct_qa.response_runner import ResponseRunner
 
         timings = {}
         t1 = time.time()
 
 
-        fraction = float(input("fraction:"))
         if fraction >= 0.99:
             queries_df = mmlu_qs
         else:
-            queries_df = mmlu_qs.sample(frac=fraction, random_state=999)
+            queries_df = mmlu_qs.sample(frac=fraction, random_state=seed)
         queries = [str(x) for x in queries_df.apply(lambda x: f'{x.question} The possible answers are : A) {x.a}; B) {x.b}; C) {x.c}; D) {x.d}. No further questions allowed. Only the first character of your answer will be considered. Please answer output a single character among the letters A, B, C, or D.', axis=1)]
         answers = list(queries_df.correct)
 
@@ -84,12 +92,11 @@ while True:
             answers = [answer for answer in answers for i in range(4)] # repeat 4 times every answer
 
         to_shuffle = list(zip(queries, answers))
-        random.seed(999)
+        random.seed(seed)
         random.shuffle(to_shuffle)
         queries, answers = zip(*to_shuffle)
         del to_shuffle
 
-        rag_size = int(input("rag size:"))
         batch_size= 32
 
         runner = ResponseRunner(
@@ -103,19 +110,24 @@ while True:
             use_rag=rag_size != 0, 
             k=rag_size if rag_size > 0 else 5,
             cache=cache,
-            cache_depth=cache_depth
+            cache_depth=0,
+            db_k = db_k
         )
         
         # get 30 most likely tokens and find which one does best
         responses, trags = runner.get_probas(30)
         best_calls = [find_best_tok(toks) for toks in responses]
 
-        print(best_calls, answers)
-        print("rag time", np.mean(trags))
-        print("total time", time.time() - t1)
-        print("hit rate", runner.cache_hit / len(responses))
-        print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, answers)]), "/", len(answers))
+        # print(best_calls, answers)
+        # print("rag time", np.mean(trags))
+        # print("total time", time.time() - t1)
+        # print("hit rate", runner.cache_hit / len(responses))
+        # print(sum([1 if x == y else 0 for (x, y) in zip(best_calls, answers)]), "/", len(answers))
+        accuracy = sum([1 if x == y else 0 for (x, y) in zip(best_calls, answers)]) / len(answers)
+
+        results[paramlist] = {"hit rate" : runner.cache_hit / len(responses), "accuracy" : accuracy}
 
     except Exception:
         print(traceback.format_exc())
 
+print(accuracy)

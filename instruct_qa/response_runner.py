@@ -24,6 +24,7 @@ class ResponseRunner:
         timings,
         cache,
         cache_depth,
+        db_k,
         use_rag=True,
         dataset=None,
         queries=None,
@@ -46,6 +47,7 @@ class ResponseRunner:
         self.cache_hit = 0
         self.cache_depth = cache_depth
         self.use_rag = use_rag
+        self.db_k = db_k
 
         # either dataset or queries should be specified, but not both
         assert (dataset is None) != (queries is None), "Either dataset or queries should be specified, but not both"
@@ -93,15 +95,27 @@ class ResponseRunner:
                 retrieved_indices = [cache_res]
                 self.cache_hit += 1
             else:
-                r_dict = self._retriever.retrieve(encoded, k=self._k)
+                r_dict = self._retriever.retrieve(encoded, k=self.db_k)
                 retrieved_indices = r_dict["indices"]
                 self.cache.insert(list(encoded[0]), list(retrieved_indices[0]))
-        
+
+
         # Get the document texts.
         passages = [
             self._document_collection.get_passages_from_indices(indices)
             for indices in retrieved_indices
         ]
+
+        if self.db_k > self._k: # need to rerank
+            encoded_passages = self._retriever.encode_queries(passages[0]) #(20, 768)
+            encoded_query = encoded[0]
+            distances = np.linalg.norm(encoded_passages - encoded_query, axis=1)
+            closest_indices = np.argsort(distances)[:5]
+            closest_indices_sorted = sorted(closest_indices)
+            #print(closest_indices_sorted, encoded_query.shape, encoded_passages.shape, distances.shape)
+            passages = [[passages[0][i] for i in list(closest_indices_sorted)]]
+
+
 
         prompts = [
             self._prompt_template(
