@@ -15,6 +15,7 @@ import string
 import time
 import itertools
 from importlib import reload
+import pickle
 
 import proximipy
 import random
@@ -51,10 +52,11 @@ index = 18 # we work with econometrics
 fraction = 1.0 # use all questions of the topic
 
 seeds_range = list(range(42, 42 + 5))
-cache_capacity_range  = [100, 250, 1000]
-cache_tolerance_range = [0.001, 1.0, 10.0, 100.0]
-db_k_range = [5, 20, 200]
+cache_capacity_range  = [10, 50, 100, 200, 300]
+cache_tolerance_range = [0.01, 0.5, 1.0, 2.0, 5.0, 10.0]
+db_k_range = [5]
 rag_size = 5
+should_expand = True #whether questions should be copied/modified to create new ones using prefixes
 
 results = {}
 
@@ -71,8 +73,7 @@ for paramlist in itertools.product(seeds_range, cache_capacity_range, cache_tole
             print("loading all")
             mmlu_qs = pd.concat((pd.read_csv(f, names=['question', 'a', 'b', 'c', 'd', 'correct']) for f in all_files), ignore_index=True)
 
-        should_expand = True #whether questions should be modified to create new ones
-        cache = proximipy.FVecToUsizeVectorBest(cache_capacity, cache_tolerance)
+        cache = proximipy.FifoCache(cache_capacity, cache_tolerance)
         reload(instruct_qa)
         from instruct_qa.response_runner import ResponseRunner
 
@@ -116,6 +117,8 @@ for paramlist in itertools.product(seeds_range, cache_capacity_range, cache_tole
         
         # get 30 most likely tokens and find which one does best
         responses, trags = runner.get_probas(30)
+        with open(f"/mnt/nfs/home/randl/llm-rag/logs/fifo-timings-s{seed}cap{cache_capacity}tol{cache_tolerance}rerank{db_k}.pkl", "wb") as f:
+            pickle.dump(trags, f)
         best_calls = [find_best_tok(toks) for toks in responses]
 
         # print(best_calls, answers)
@@ -126,8 +129,12 @@ for paramlist in itertools.product(seeds_range, cache_capacity_range, cache_tole
         accuracy = sum([1 if x == y else 0 for (x, y) in zip(best_calls, answers)]) / len(answers)
 
         results[paramlist] = {"hit rate" : runner.cache_hit / len(responses), "accuracy" : accuracy}
+        print(paramlist, results[paramlist])
+        
 
     except Exception:
         print(traceback.format_exc())
 
-print(accuracy)
+with open("/mnt/nfs/home/randl/llm-rag/logs/acc_hitrate.pkl", "wb") as f:
+    pickle.dump(results, f)
+

@@ -69,53 +69,50 @@ class ResponseRunner:
 
     def rag_call(self, batch, queries):
 
+
+        ## transform text to vectors
         t1 = time.time()
-    
-        if self._use_hosted_retriever:
-            post_results = requests.post(
-                url=self._hosted_retriever_url,
-                json={
-                    "queries": queries,
-                    "k": self._k,
-                    "dataset": self._collection_name,
-                },
-            )
-            r_dict = dict_values_list_to_numpy(post_results.json())
-            retrieved_indices = r_dict["indices"]
-        elif self._use_cached_retrieved_results:
-            retrieved_ctx_ids = self._retriever.retrieve(queries, k=self._k)
-            retrieved_indices = [
-                self._document_collection.get_indices_from_ids(x)
-                for x in retrieved_ctx_ids
-            ]
-        else:
-            encoded = self._retriever.encode_queries(queries)
-            cache_res = self.cache.find(list(encoded[0]))
-            if cache_res is not None:
-                retrieved_indices = [cache_res]
-                self.cache_hit += 1
-            else:
-                r_dict = self._retriever.retrieve(encoded, k=self.db_k)
-                retrieved_indices = r_dict["indices"]
-                self.cache.insert(list(encoded[0]), list(retrieved_indices[0]))
+        encoded = self._retriever.encode_queries(queries)
+        t2 = time.time()
 
+        # check in the cache. Todo batch search in Rust code 
+        cache_res = []
+        for to_search in encoded:
+            cache_res.append(self.cache.find(list(to_search)))
+        indices_found = [i for i in range(len(encoded)) if cache_res[i] is not None]
+        indices_not_found = [i for i in range(len(encoded)) if cache_res[i] is None]
+        self.cache_hit += len(indices_found)
 
-        # Get the document texts.
+        # retrieved indices is the cache/db returned value for all vectors in batch
+        # for now, it has results from the cache and None where there was no match
+        # so we then ask the DB wherever it is None
+        retrieved_indices = cache_res
+
+        if len(indices_not_found) > 0:
+            # db calls for the cache misses
+            missed = np.array([encoded[i] for i in indices_not_found])
+            r_dict = self._retriever.retrieve(missed, k=self.db_k)["indices"]
+
+            # update the cache and the retrieved indices
+            for (r_dict_i, cache_res_i) in enumerate(indices_not_found):
+                retrieved_indices[cache_res_i] = r_dict[r_dict_i]
+                self.cache.insert(list(encoded[cache_res_i]), list(retrieved_indices[cache_res_i]))
+
+        t3 = time.time()
+
         passages = [
             self._document_collection.get_passages_from_indices(indices)
             for indices in retrieved_indices
         ]
 
-        if self.db_k > self._k: # need to rerank
-            encoded_passages = self._retriever.encode_queries(passages[0]) #(20, 768)
-            encoded_query = encoded[0]
-            distances = np.linalg.norm(encoded_passages - encoded_query, axis=1)
-            closest_indices = np.argsort(distances)[:5]
-            closest_indices_sorted = sorted(closest_indices)
-            #print(closest_indices_sorted, encoded_query.shape, encoded_passages.shape, distances.shape)
-            passages = [[passages[0][i] for i in list(closest_indices_sorted)]]
+        t4 = time.time()
 
-
+        distances = []
+        for i in range(len(encoded)):
+            encoded_passages = self._retriever.encode_queries(passages[i]) #(20, 768)
+            encoded_query = encoded[i]
+            distances.append(np.linalg.norm(encoded_passages - encoded_query, axis=1))
+        distances = np.mean(distances)
 
         prompts = [
             self._prompt_template(
@@ -124,13 +121,13 @@ class ResponseRunner:
             )
             for sample, p in zip(batch, passages)
         ]
+        return prompts, {"avg_dist" : distances, "hit" : len(indices_not_found) < len(indices_found), "encoding" : t2 - t1, "search" : t3 - t2, "fetch_doc" : t4 - t3}
 
-        return prompts, (time.time() - t1)
-
-    def get_probas(self, k): #todo batching
+    def get_probas(self, k):
+        INTERNAL_BATCH_SIZE = self._batch_size
         batches = [
-            self._dataset[i:i+1]
-            for i in range(len(self._dataset))
+            self._dataset[i:i+INTERNAL_BATCH_SIZE]
+            for i in range(0, len(self._dataset), INTERNAL_BATCH_SIZE)
         ]
         ret = []
         trags = []
@@ -146,10 +143,10 @@ class ResponseRunner:
                     )
                     for sample in batch
                 ]
-                trag = 0
+                trag = {}
                 retrieved_indices = [0] * self._k
-
-            ret.append(self._probamodel(prompts[0], k))
+            for p in prompts: # no LLM batching but we don't care, it's not part of the measured DB query latency
+                ret.append(self._probamodel(p, k))
             trags.append(trag)
         return ret, trags
 
