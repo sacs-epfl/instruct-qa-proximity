@@ -88,7 +88,7 @@ class LLMEvalTemplate:
 class QAPromptTemplate(PromptTemplate):
     def __init__(self):
         self.variables = ["query", "retrieved_passages"]
-        self.template = "Please answer the following question given the following passages:\n{retrieved_passages}\nQuestion: {query}\nAnswer: "
+        self.template = "You are a multiple-choice question answering machine. You are only allowed to output a single letter. Do not write a full paragraph. Please answer the following question given the following passages:\n{retrieved_passages}\nQuestion: {query}\nAnswer: "
 
         self.passage_template = PassageTemplate()
 
@@ -110,11 +110,11 @@ class LlamaChatQAPromptTemplate(QAPromptTemplate):
             self.B_INST
             + " "
             + self.B_SYS
-            + "Please answer the following question given the following passages:"
+            + "You are designed to answer multiple-choice questions. Your answer format is \"<LETTER> - <EXPLANATION>\". There is a RAG meant to help you by giving you resources that may be useful. The RAG information starts NOW:"
             + self.E_SYS
-            + "{retrieved_passages}\nQuestion: {query}\n"
+            + "{retrieved_passages}\n The RAG information stops NOW. Your question is: {query}\n"
             + self.E_INST
-            + "\nAnswer: "
+            + "\nYou also may answer that you do not know. Among A, B, C or D, your answer is : "
         )
 
         # Llama behaves wierdly at \n\n, so we modeify the passage template to not have \n\n

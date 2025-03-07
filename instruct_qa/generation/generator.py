@@ -308,6 +308,7 @@ class Flan(BaseGenerator):
             max_new_tokens=self.max_new_tokens,
             # min_new_tokens=self.min_new_tokens,
         )
+
         return self.tokenizer.batch_decode(
             generate_ids,
             skip_special_tokens=self.skip_special_tokens,
